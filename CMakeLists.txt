@@ -12,7 +12,7 @@ find_package(Qt5Concurrent)
 
 add_subdirectory(zxing-cpp/core)
 
-add_library(${PROJECT_NAME} "main.cpp"
+add_library(${PROJECT_NAME}
     "qzxingnu.cpp"
     "qzxingnufilter.cpp"
     )
