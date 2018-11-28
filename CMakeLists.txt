@@ -18,3 +18,9 @@ add_library(${PROJECT_NAME}
     )
 
 target_link_libraries(${PROJECT_NAME} Qt5::Core Qt5::Multimedia Qt5::Gui Qt5::Concurrent ZXingCore)
+
+set(CMAKE_AUTORCC ON)
+find_package(Qt5Quick)
+
+add_executable(${PROJECT_NAME}_example "example/main.cpp" "example/qml.qrc")
+target_link_libraries(${PROJECT_NAME}_example Qt5::Core Qt5::Multimedia Qt5::Gui Qt5::Concurrent Qt5::Quick ${PROJECT_NAME})
