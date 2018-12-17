@@ -24,8 +24,8 @@ public:
     {
     }
 
-    QVideoFrame run(QVideoFrame *input, const QVideoSurfaceFormat &surfaceFormat,
-                    RunFlags flags) override
+    QVideoFrame run(QVideoFrame *input, const QVideoSurfaceFormat & /*surfaceFormat*/,
+                    RunFlags  /*flags*/) override
     {
         if (!m_filter) {
             qWarning() << "filter null";
