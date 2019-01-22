@@ -14,9 +14,21 @@ using ZXing::HybridBinarizer;
 using ZXing::MultiFormatReader;
 using ZXing::Result;
 
-QZXingNu::QZXingNu(QObject *parent)
+static std::vector<BarcodeFormat> zxingFormats(const QVector<int>& from)
+{
+    std::vector<BarcodeFormat> result;
+    result.reserve(from.size());
+    std::transform(from.begin(), from.end(), std::back_inserter(result),
+        [](int a) { return static_cast<ZXing::BarcodeFormat>(a); });
+    return result;
+}
+
+QZXingNu::QZXingNu(QObject* parent)
     : QObject(parent)
 {
+    connect(this, &QZXingNu::formatsChanged, this, [this]() {
+        m_zxingFormats = zxingFormats(m_formats);
+    });
 }
 
 QVector<int> QZXingNu::formats() const
@@ -34,21 +46,12 @@ bool QZXingNu::tryRotate() const
     return m_tryRotate;
 }
 
-static std::vector<BarcodeFormat> zxingFormats(const QVector<int> &from)
-{
-    std::vector<BarcodeFormat> result;
-    result.reserve(from.size());
-    std::transform(from.begin(), from.end(), std::back_inserter(result),
-                   [](int a) { return static_cast<ZXing::BarcodeFormat>(a); });
-    return result;
-}
-
-spZXingResult QZXingNu::decodeImage(const QImage &image)
+spZXingResult QZXingNu::decodeImage(const QImage& image)
 {
     auto generic = std::make_shared<GenericLuminanceSource>(
         image.width(), image.height(), image.bits(), image.width() * 4, 4, 0, 1, 2);
     DecodeHints hints;
-    hints.setPossibleFormats(zxingFormats(formats()));
+    hints.setPossibleFormats(m_zxingFormats);
     hints.setShouldTryHarder(m_tryHarder);
     hints.setShouldTryRotate(m_tryRotate);
     MultiFormatReader reader(hints);

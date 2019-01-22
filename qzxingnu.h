@@ -4,18 +4,19 @@
 #include <QImage>
 #include <QObject>
 #include <memory>
+#include <zxing-cpp/core/src/BarcodeFormat.h>
 #include <zxing-cpp/core/src/Result.h>
 
 using spZXingResult = std::shared_ptr<ZXing::Result>;
 
-class QZXingNu : public QObject
-{
+class QZXingNu : public QObject {
     Q_OBJECT
     Q_PROPERTY(QVector<int> formats READ formats WRITE setFormats NOTIFY formatsChanged)
     Q_PROPERTY(bool tryHarder READ tryHarder WRITE setTryHarder NOTIFY tryHarderChanged)
     Q_PROPERTY(bool tryRotate READ tryRotate WRITE setTryRotate NOTIFY tryRotateChanged)
     QVector<int> m_formats;
-
+    using ZXingFormats = std::vector<ZXing::BarcodeFormat>;
+    ZXingFormats m_zxingFormats;
     bool m_tryHarder = false;
     bool m_tryRotate = false;
 
@@ -77,7 +78,7 @@ public:
         FORMAT_COUNT,
     };
     Q_ENUM(BarcodeFormat)
-    explicit QZXingNu(QObject *parent = nullptr);
+    explicit QZXingNu(QObject* parent = nullptr);
     QVector<int> formats() const;
     bool tryHarder() const;
     bool tryRotate() const;
@@ -88,7 +89,7 @@ signals:
     void tryRotateChanged(bool tryRotate);
 
 public slots:
-    spZXingResult decodeImage(const QImage &image);
+    spZXingResult decodeImage(const QImage& image);
     void setFormats(QVector<int> formats);
     void setTryHarder(bool tryHarder);
     void setTryRotate(bool tryRotate);
