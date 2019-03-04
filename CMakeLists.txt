@@ -14,7 +14,11 @@ add_subdirectory(zxing-cpp/core)
 
 add_library(${PROJECT_NAME}
     "qzxingnu.cpp"
+    "qzxingnu.h"
     "qzxingnufilter.cpp"
+    "qzxingnufilter.h"
+    "QZXingNu"
+    "QZXingNuFilter"
     )
 
 target_link_libraries(${PROJECT_NAME} Qt5::Core Qt5::Multimedia Qt5::Gui Qt5::Concurrent ZXingCore)

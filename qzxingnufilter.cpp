@@ -1,4 +1,5 @@
 #include "qzxingnufilter.h"
+#include <QVariant>
 #include <QFutureWatcher>
 #include <QVideoFilterRunnable>
 #include <QtConcurrent>
@@ -10,75 +11,81 @@
 #include <zxing-cpp/core/src/HybridBinarizer.h>
 #include <zxing-cpp/core/src/MultiFormatReader.h>
 #include <zxing-cpp/core/src/Result.h>
+#include <QPointer>
 
 extern QImage qt_imageFromVideoFrame(const QVideoFrame &frame);
+namespace QZXingNu {
 
-class QZxingNuFilterRunnable : public QObject, public QVideoFilterRunnable
+class QZXingNuFilterRunnable : public QObject, public QVideoFilterRunnable
 {
-    QZxingNuFilter *m_filter = nullptr;
+
+    QZXingNuFilter *m_filter = nullptr;
 
 public:
-    QZxingNuFilterRunnable(QZxingNuFilter *filter, QObject *parent = nullptr)
+    explicit QZXingNuFilterRunnable(QZXingNuFilter *filter, QObject *parent = nullptr)
         : QObject(parent)
         , m_filter(filter)
     {
     }
 
     QVideoFrame run(QVideoFrame *input, const QVideoSurfaceFormat & /*surfaceFormat*/,
-                    RunFlags  /*flags*/) override
+                    RunFlags /*flags*/) override
     {
-        if (!m_filter) {
+        if (m_filter == nullptr) {
             qWarning() << "filter null";
             return *input;
         }
-        if (!input || !input->isValid()) {
+        if (!input->isValid()) {
+            qWarning() << "input invalid";
             return *input;
         }
-        if (m_filter->m_busy) {
+
+        if (m_filter->m_threadPool->activeThreadCount()
+            >= m_filter->m_threadPool->maxThreadCount()) {
+            qDebug() << QString("FAIL: threads: %1, max_threads: %2")
+                            .arg(m_filter->m_threadPool->activeThreadCount())
+                            .arg(m_filter->m_threadPool->maxThreadCount());
             return *input;
         }
-        m_filter->m_busy = 1;
         const auto frame = qt_imageFromVideoFrame(*input);
         auto bound = std::bind(&QZXingNu::decodeImage, m_filter->m_qzxingNu, std::placeholders::_1);
-        auto watcher = new QFutureWatcher<spZXingResult>();
-        QObject::connect(watcher, &QFutureWatcher<spZXingResult>::finished, m_filter,
+        auto watcher = new QFutureWatcher<QZXingNuDecodeResult>(this);
+        QObject::connect(watcher, &QFutureWatcher<QZXingNuDecodeResult>::finished, this,
                          [watcher, this]() {
                              auto result = watcher->future().result();
-                             if (result && result->isValid()) {
-                                 emit m_filter->tagFound(QString::fromStdWString(result->text()));
-                             }
-                             m_filter->m_busy = 0;
+                             delete watcher;
                          });
-        QObject::connect(watcher, &QFutureWatcher<spZXingResult>::finished, m_filter,
-                         [this, watcher]() { watcher->deleteLater(); });
-        watcher->setFuture(QtConcurrent::run(m_filter->m_threadPool, bound, frame));
+        auto future = QtConcurrent::run(m_filter->m_threadPool, bound, frame);
+        watcher->setFuture(future);
         return *input;
     }
 };
 
-QZxingNuFilter::QZxingNuFilter(QObject *parent)
+QZXingNuFilter::QZXingNuFilter(QObject *parent)
     : QAbstractVideoFilter(parent)
     , m_threadPool(new QThreadPool(this))
 {
-    m_threadPool->setMaxThreadCount(1);
+    m_threadPool->setMaxThreadCount(QThread::idealThreadCount() > 1
+                                        ? QThread::idealThreadCount() - 1
+                                        : QThread::idealThreadCount());
+    connect(this, &QZXingNuFilter::qzxingNuChanged, this, [this]() {
+        connect(m_qzxingNu, &QZXingNu::decodeResultChanged, this, &QZXingNuFilter::setDecodeResult);
+    });
+    connect(this, &QZXingNuFilter::decodeResultChanged, this,
+            [this]() { emit tagFound(m_decodeResult.text); });
 }
 
-QVideoFilterRunnable *QZxingNuFilter::createFilterRunnable()
+QVideoFilterRunnable *QZXingNuFilter::createFilterRunnable()
 {
-    return new QZxingNuFilterRunnable(this);
+    return new QZXingNuFilterRunnable(this);
 }
 
-QZXingNu *QZxingNuFilter::qzxingNu() const
+QZXingNu *QZXingNuFilter::qzxingNu() const
 {
     return m_qzxingNu;
 }
 
-bool QZxingNuFilter::busy() const
-{
-    return m_busy;
-}
-
-void QZxingNuFilter::setQzxingNu(QZXingNu *qzxingNu)
+void QZXingNuFilter::setQzxingNu(QZXingNu *qzxingNu)
 {
     if (m_qzxingNu == qzxingNu)
         return;
@@ -86,12 +93,4 @@ void QZxingNuFilter::setQzxingNu(QZXingNu *qzxingNu)
     m_qzxingNu = qzxingNu;
     emit qzxingNuChanged(m_qzxingNu);
 }
-
-void QZxingNuFilter::setBusy(bool busy)
-{
-    if (m_busy == busy)
-        return;
-
-    m_busy = busy;
-    emit busyChanged(m_busy);
-}
+} // namespace QZXingNu
