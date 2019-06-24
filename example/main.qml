@@ -22,7 +22,6 @@ Window {
             }
             qzxingNu: QZXingNu {
                 formats: [QZXingNu.QR_CODE]
-                onDecodeResultChanged: console.log(decodeResult)
             }
         }
 
