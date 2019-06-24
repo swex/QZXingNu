@@ -1,6 +1,8 @@
 #include "qzxingnu.h"
 #include <QCoreApplication>
+#ifdef QT_QML_LIB
 #include <QtQml/QQmlEngine>
+#endif
 #include "qzxingnufilter.h"
 #include <zxing-cpp/core/src/BarcodeFormat.h>
 #include <zxing-cpp/core/src/DecodeHints.h>
@@ -70,6 +72,7 @@ QZXingNu::DecodeResult QZXingNu::decodeResult() const
     return m_decodeResult;
 }
 
+#ifdef QT_QML_LIB
 void QZXingNu::registerQMLTypes()
 {
     qRegisterMetaType<QZXingNu::DecodeResult>("DecodeResult");
@@ -81,6 +84,7 @@ void QZXingNu::registerQMLTypes()
     qmlRegisterType<QZXingNuFilter>("com.github.swex.QZXingNu", 1, 0, "QZXingNuFilter");
     qmlRegisterType<QZXingNu>("com.github.swex.QZXingNu", 1, 0, "QZXingNu");
 }
+#endif
 
 QZXingNu::DecodeResult QZXingNu::decodeImage(const QImage &image)
 {

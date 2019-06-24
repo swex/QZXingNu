@@ -101,7 +101,9 @@ public:
     bool tryRotate() const;
     QZXingNu::DecodeResult decodeResult() const;
 
+#ifdef QT_QML_LIB
     static void registerQMLTypes();
+#endif
 
 signals:
     void imageDecoded(QString data);
