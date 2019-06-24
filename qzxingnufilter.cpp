@@ -50,7 +50,7 @@ public:
         auto bound = std::bind(&QZXingNu::decodeImage, m_filter->m_qzxingNu, std::placeholders::_1);
         auto watcher = new QFutureWatcher<QZXingNu::DecodeResult>(this);
         QObject::connect(watcher, &QFutureWatcher<QZXingNu::DecodeResult>::finished, this,
-                         [watcher, this]() {
+                         [watcher]() {
                              auto result = watcher->future().result();
                              delete watcher;
                          });
