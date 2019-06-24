@@ -11,12 +11,18 @@ class QZXingNuFilter : public QAbstractVideoFilter
     Q_PROPERTY(QZXingNu *qzxingNu READ qzxingNu WRITE setQzxingNu NOTIFY qzxingNuChanged)
     Q_PROPERTY(QZXingNu::DecodeResult decodeResult READ decodeResult WRITE setDecodeResult NOTIFY
                    decodeResultChanged)
+    Q_PROPERTY(QRect captureRect READ captureRect WRITE setCaptureRect)
+
+    QRect m_captureRect;
     QZXingNu *m_qzxingNu = nullptr;
     QThreadPool *m_threadPool = nullptr;
     friend class QZXingNuFilterRunnable;
 
 public:
     QZXingNuFilter(QObject *parent = nullptr);
+
+    QRect captureRect() const;
+    void setCaptureRect(QRect a_captureRect);
 
     // QAbstractVideoFilter interface
 public:

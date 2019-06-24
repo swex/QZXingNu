@@ -46,7 +46,7 @@ public:
                             .arg(m_filter->m_threadPool->maxThreadCount());
             return *input;
         }
-        const auto frame = qt_imageFromVideoFrame(*input);
+        auto frame = qt_imageFromVideoFrame(*input);
         auto bound = std::bind(&QZXingNu::decodeImage, m_filter->m_qzxingNu, std::placeholders::_1);
         auto watcher = new QFutureWatcher<QZXingNu::DecodeResult>(this);
         QObject::connect(watcher, &QFutureWatcher<QZXingNu::DecodeResult>::finished, this,
@@ -54,6 +54,10 @@ public:
                              auto result = watcher->future().result();
                              delete watcher;
                          });
+
+        if (m_filter->captureRect().isValid())
+            frame = frame.copy(m_filter->captureRect());
+
         auto future = QtConcurrent::run(m_filter->m_threadPool, bound, frame);
         watcher->setFuture(future);
         return *input;
@@ -72,6 +76,16 @@ QZXingNuFilter::QZXingNuFilter(QObject *parent)
     });
     connect(this, &QZXingNuFilter::decodeResultChanged, this,
             [this]() { emit tagFound(m_decodeResult.text); });
+}
+
+QRect QZXingNuFilter::captureRect() const
+{
+    return m_captureRect;
+}
+
+void QZXingNuFilter::setCaptureRect(QRect a_captureRect)
+{
+    m_captureRect = a_captureRect;
 }
 
 QVideoFilterRunnable *QZXingNuFilter::createFilterRunnable()
