@@ -31,21 +31,32 @@ public:
                     RunFlags /*flags*/) override
     {
         if (m_filter == nullptr) {
-            qWarning() << "filter null";
+//            qWarning() << "filter null";
             return *input;
         }
+
         if (!input->isValid()) {
-            qWarning() << "input invalid";
+//            qWarning() << "input invalid";
+            return *input;
+        }
+
+        if ((!m_filter->m_lastFrameCheckedTime.isNull()) &&
+            (m_filter->m_intervalToCheckFrames > 0) &&
+            (m_filter->m_lastFrameCheckedTime.elapsed() < m_filter->m_intervalToCheckFrames)) {
+//            qWarning() << "frame skipped";
             return *input;
         }
 
         if (m_filter->m_threadPool->activeThreadCount()
             >= m_filter->m_threadPool->maxThreadCount()) {
-            qDebug() << QString("FAIL: threads: %1, max_threads: %2")
-                            .arg(m_filter->m_threadPool->activeThreadCount())
-                            .arg(m_filter->m_threadPool->maxThreadCount());
+//            qDebug() << QString("FAIL: threads: %1, max_threads: %2")
+//                            .arg(m_filter->m_threadPool->activeThreadCount())
+//                            .arg(m_filter->m_threadPool->maxThreadCount());
             return *input;
         }
+
+        m_filter->m_lastFrameCheckedTime.start();
+
         auto frame = qt_imageFromVideoFrame(*input);
         auto bound = std::bind(&QZXingNu::decodeImage, m_filter->m_qzxingNu, std::placeholders::_1);
         auto watcher = new QFutureWatcher<QZXingNu::DecodeResult>(this);
@@ -86,6 +97,16 @@ QRect QZXingNuFilter::captureRect() const
 void QZXingNuFilter::setCaptureRect(QRect a_captureRect)
 {
     m_captureRect = a_captureRect;
+}
+
+qint32 QZXingNuFilter::intervalToCheckFrames() const
+{
+    return m_intervalToCheckFrames;
+}
+
+void QZXingNuFilter::setIntervalToCheckFrames(qint32 a_intervalToCheckFrames)
+{
+    m_intervalToCheckFrames = a_intervalToCheckFrames;
 }
 
 QVideoFilterRunnable *QZXingNuFilter::createFilterRunnable()

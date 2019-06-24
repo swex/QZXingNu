@@ -3,6 +3,7 @@
 
 #include <QAbstractVideoFilter>
 #include <QThreadPool>
+#include <QTime>
 #include <qzxingnu.h>
 
 class QZXingNuFilter : public QAbstractVideoFilter
@@ -12,10 +13,15 @@ class QZXingNuFilter : public QAbstractVideoFilter
     Q_PROPERTY(QZXingNu::DecodeResult decodeResult READ decodeResult WRITE setDecodeResult NOTIFY
                    decodeResultChanged)
     Q_PROPERTY(QRect captureRect READ captureRect WRITE setCaptureRect)
+    Q_PROPERTY(qint32 intervalToCheckFrames READ intervalToCheckFrames WRITE setIntervalToCheckFrames)
 
     QRect m_captureRect;
     QZXingNu *m_qzxingNu = nullptr;
     QThreadPool *m_threadPool = nullptr;
+    QZXingNu::DecodeResult m_decodeResult;
+    QTime m_lastFrameCheckedTime;
+    qint32 m_intervalToCheckFrames = 250;
+
     friend class QZXingNuFilterRunnable;
 
 public:
@@ -23,6 +29,9 @@ public:
 
     QRect captureRect() const;
     void setCaptureRect(QRect a_captureRect);
+
+    qint32 intervalToCheckFrames() const;
+    void setIntervalToCheckFrames(qint32 a_intervalToCheckFrames);
 
     // QAbstractVideoFilter interface
 public:
@@ -41,9 +50,6 @@ public slots:
         m_decodeResult = decodeResult;
         emit decodeResultChanged(m_decodeResult);
     }
-
-private:
-    QZXingNu::DecodeResult m_decodeResult;
 
 signals:
     void qzxingNuChanged(QZXingNu *qzxingNu);
