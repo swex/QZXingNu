@@ -14,7 +14,6 @@
 #include <QPointer>
 
 extern QImage qt_imageFromVideoFrame(const QVideoFrame &frame);
-namespace QZXingNu {
 
 class QZXingNuFilterRunnable : public QObject, public QVideoFilterRunnable
 {
@@ -49,8 +48,8 @@ public:
         }
         const auto frame = qt_imageFromVideoFrame(*input);
         auto bound = std::bind(&QZXingNu::decodeImage, m_filter->m_qzxingNu, std::placeholders::_1);
-        auto watcher = new QFutureWatcher<QZXingNuDecodeResult>(this);
-        QObject::connect(watcher, &QFutureWatcher<QZXingNuDecodeResult>::finished, this,
+        auto watcher = new QFutureWatcher<QZXingNu::DecodeResult>(this);
+        QObject::connect(watcher, &QFutureWatcher<QZXingNu::DecodeResult>::finished, this,
                          [watcher, this]() {
                              auto result = watcher->future().result();
                              delete watcher;
@@ -93,4 +92,3 @@ void QZXingNuFilter::setQzxingNu(QZXingNu *qzxingNu)
     m_qzxingNu = qzxingNu;
     emit qzxingNuChanged(m_qzxingNu);
 }
-} // namespace QZXingNu

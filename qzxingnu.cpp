@@ -9,8 +9,6 @@
 #include <zxing-cpp/core/src/MultiFormatReader.h>
 #include <zxing-cpp/core/src/Result.h>
 
-namespace QZXingNu {
-
 using ZXingFormats = std::vector<ZXing::BarcodeFormat>;
 using ZXing::DecodeHints;
 using ZXing::GenericLuminanceSource;
@@ -27,15 +25,16 @@ static QVector<QPointF> toQVectorOfQPoints(const std::vector<ZXing::ResultPoint>
     return result;
 }
 
-static QZXingNuDecodeResult toQZXingNuDecodeResult(const ZXing::Result &result)
+static QZXingNu::DecodeResult toQZXingNuDecodeResult(const ZXing::Result &result)
 {
-    return { static_cast<DecodeStatus>(result.status()),
-             static_cast<BarcodeFormat>(result.format()),
+    return { static_cast<QZXingNu::DecodeStatus>(result.status()),
+             static_cast<QZXingNu::BarcodeFormat>(result.format()),
              QString::fromStdWString(result.text()),
              QByteArray(result.rawBytes().charPtr(), result.rawBytes().length()),
              toQVectorOfQPoints(result.resultPoints()),
              result.isValid() };
 }
+
 static ZXingFormats zxingFormats(const QVector<int> &from)
 {
     ZXingFormats result;
@@ -66,12 +65,24 @@ bool QZXingNu::tryRotate() const
     return m_tryRotate;
 }
 
-QZXingNuDecodeResult QZXingNu::decodeResult() const
+QZXingNu::DecodeResult QZXingNu::decodeResult() const
 {
     return m_decodeResult;
 }
 
-QZXingNuDecodeResult QZXingNu::decodeImage(const QImage &image)
+void QZXingNu::registerQMLTypes()
+{
+    qRegisterMetaType<QZXingNu::DecodeResult>("DecodeResult");
+    qRegisterMetaType<QZXingNu::DecodeStatus>("DecodeStatus");
+    qRegisterMetaType<QZXingNu::BarcodeFormat>("BarcodeFormat");
+
+    qmlRegisterUncreatableMetaObject(QZXingNu::staticMetaObject, "com.github.swex.QZXingNu", 1, 0,
+                                     "QZXingNu", "Error: only enums allowed");
+    qmlRegisterType<QZXingNuFilter>("com.github.swex.QZXingNu", 1, 0, "QZXingNuFilter");
+    qmlRegisterType<QZXingNu>("com.github.swex.QZXingNu", 1, 0, "QZXingNu");
+}
+
+QZXingNu::DecodeResult QZXingNu::decodeImage(const QImage &image)
 {
     // reentrant
     auto generic = std::make_shared<GenericLuminanceSource>(
@@ -118,9 +129,8 @@ void QZXingNu::setTryRotate(bool tryRotate)
     emit tryRotateChanged(m_tryRotate);
 }
 
-void QZXingNu::setDecodeResult(QZXingNuDecodeResult decodeResult)
+void QZXingNu::setDecodeResult(QZXingNu::DecodeResult decodeResult)
 {
     m_decodeResult = decodeResult;
     emit decodeResultChanged(m_decodeResult);
 }
-} // namespace QZXingNu
