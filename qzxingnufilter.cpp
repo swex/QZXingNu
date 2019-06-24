@@ -75,7 +75,7 @@ QZXingNuFilter::QZXingNuFilter(QObject *parent)
         connect(m_qzxingNu, &QZXingNu::decodeResultChanged, this, &QZXingNuFilter::setDecodeResult);
     });
     connect(this, &QZXingNuFilter::decodeResultChanged, this,
-            [this]() { emit tagFound(m_decodeResult.text); });
+            [this]() { emit tagFound(m_decodeResult.text, m_decodeResult.format); });
 }
 
 QRect QZXingNuFilter::captureRect() const

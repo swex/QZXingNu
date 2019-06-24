@@ -31,7 +31,8 @@ public:
     QZXingNu::DecodeResult decodeResult() const { return m_decodeResult; }
 
 signals:
-    void tagFound(QString tag);
+    void tagFound(QString tag, QZXingNu::BarcodeFormat format);
+
 public slots:
     void setQzxingNu(QZXingNu *qzxingNu);
 
