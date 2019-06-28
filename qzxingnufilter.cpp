@@ -14,7 +14,6 @@
 #include <QPointer>
 
 extern QImage qt_imageFromVideoFrame(const QVideoFrame &frame);
-namespace QZXingNu {
 
 class QZXingNuFilterRunnable : public QObject, public QVideoFilterRunnable
 {
@@ -32,29 +31,44 @@ public:
                     RunFlags /*flags*/) override
     {
         if (m_filter == nullptr) {
-            qWarning() << "filter null";
+//            qWarning() << "filter null";
             return *input;
         }
+
         if (!input->isValid()) {
-            qWarning() << "input invalid";
+//            qWarning() << "input invalid";
+            return *input;
+        }
+
+        if ((!m_filter->m_lastFrameCheckedTime.isNull()) &&
+            (m_filter->m_intervalToCheckFrames > 0) &&
+            (m_filter->m_lastFrameCheckedTime.elapsed() < m_filter->m_intervalToCheckFrames)) {
+//            qWarning() << "frame skipped";
             return *input;
         }
 
         if (m_filter->m_threadPool->activeThreadCount()
             >= m_filter->m_threadPool->maxThreadCount()) {
-            qDebug() << QString("FAIL: threads: %1, max_threads: %2")
-                            .arg(m_filter->m_threadPool->activeThreadCount())
-                            .arg(m_filter->m_threadPool->maxThreadCount());
+//            qDebug() << QString("FAIL: threads: %1, max_threads: %2")
+//                            .arg(m_filter->m_threadPool->activeThreadCount())
+//                            .arg(m_filter->m_threadPool->maxThreadCount());
             return *input;
         }
-        const auto frame = qt_imageFromVideoFrame(*input);
+
+        m_filter->m_lastFrameCheckedTime.start();
+
+        auto frame = qt_imageFromVideoFrame(*input);
         auto bound = std::bind(&QZXingNu::decodeImage, m_filter->m_qzxingNu, std::placeholders::_1);
-        auto watcher = new QFutureWatcher<QZXingNuDecodeResult>(this);
-        QObject::connect(watcher, &QFutureWatcher<QZXingNuDecodeResult>::finished, this,
-                         [watcher, this]() {
+        auto watcher = new QFutureWatcher<QZXingNu::DecodeResult>(this);
+        QObject::connect(watcher, &QFutureWatcher<QZXingNu::DecodeResult>::finished, this,
+                         [watcher]() {
                              auto result = watcher->future().result();
                              delete watcher;
                          });
+
+        if (m_filter->captureRect().isValid())
+            frame = frame.copy(m_filter->captureRect());
+
         auto future = QtConcurrent::run(m_filter->m_threadPool, bound, frame);
         watcher->setFuture(future);
         return *input;
@@ -72,7 +86,27 @@ QZXingNuFilter::QZXingNuFilter(QObject *parent)
         connect(m_qzxingNu, &QZXingNu::decodeResultChanged, this, &QZXingNuFilter::setDecodeResult);
     });
     connect(this, &QZXingNuFilter::decodeResultChanged, this,
-            [this]() { emit tagFound(m_decodeResult.text); });
+            [this]() { emit tagFound(m_decodeResult.text, m_decodeResult.format); });
+}
+
+QRect QZXingNuFilter::captureRect() const
+{
+    return m_captureRect;
+}
+
+void QZXingNuFilter::setCaptureRect(QRect a_captureRect)
+{
+    m_captureRect = a_captureRect;
+}
+
+qint32 QZXingNuFilter::intervalToCheckFrames() const
+{
+    return m_intervalToCheckFrames;
+}
+
+void QZXingNuFilter::setIntervalToCheckFrames(qint32 a_intervalToCheckFrames)
+{
+    m_intervalToCheckFrames = a_intervalToCheckFrames;
 }
 
 QVideoFilterRunnable *QZXingNuFilter::createFilterRunnable()
@@ -93,4 +127,3 @@ void QZXingNuFilter::setQzxingNu(QZXingNu *qzxingNu)
     m_qzxingNu = qzxingNu;
     emit qzxingNuChanged(m_qzxingNu);
 }
-} // namespace QZXingNu
