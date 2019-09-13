@@ -6,14 +6,14 @@
 #include <qzxingnu.h>
 namespace QZXingNu {
 
-class QZXingNuFilter : public QAbstractVideoFilter
-{
+class QZXingNuFilter : public QAbstractVideoFilter {
     Q_OBJECT
     Q_PROPERTY(QZXingNu *qzxingNu READ qzxingNu WRITE setQzxingNu NOTIFY qzxingNuChanged)
-    Q_PROPERTY(QZXingNuDecodeResult decodeResult READ decodeResult WRITE setDecodeResult NOTIFY
-                   decodeResultChanged)
-    QZXingNu *m_qzxingNu = nullptr;
-    QThreadPool *m_threadPool = nullptr;
+    Q_PROPERTY(QZXingNuDecodeResult decodeResult READ decodeResult WRITE setDecodeResult NOTIFY decodeResultChanged)
+    QZXingNu* m_qzxingNu = nullptr;
+    QThreadPool* m_threadPool = nullptr;
+    QZXingNuDecodeResult m_decodeResult;
+    int m_decodersRunning = 0;
     friend class QZXingNuFilterRunnable;
 
 public:
@@ -23,21 +23,13 @@ public:
 public:
     QVideoFilterRunnable *createFilterRunnable() override;
     QZXingNu *qzxingNu() const;
-    QZXingNuDecodeResult decodeResult() const { return m_decodeResult; }
+    QZXingNuDecodeResult decodeResult() const;
 
 signals:
     void tagFound(QString tag);
 public slots:
     void setQzxingNu(QZXingNu *qzxingNu);
-
-    void setDecodeResult(QZXingNuDecodeResult decodeResult)
-    {
-        m_decodeResult = decodeResult;
-        emit decodeResultChanged(m_decodeResult);
-    }
-
-private:
-    QZXingNuDecodeResult m_decodeResult;
+    void setDecodeResult(QZXingNuDecodeResult decodeResult);
 
 signals:
     void qzxingNuChanged(QZXingNu *qzxingNu);

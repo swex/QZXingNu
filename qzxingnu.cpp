@@ -74,15 +74,14 @@ QZXingNuDecodeResult QZXingNu::decodeResult() const
 QZXingNuDecodeResult QZXingNu::decodeImage(const QImage &image)
 {
     // reentrant
-    auto generic = std::make_shared<GenericLuminanceSource>(
-        image.width(), image.height(), image.bits(), image.width() * 4, 4, 0, 1, 2);
+    auto luminanceSource = std::make_shared<GenericLuminanceSource>(image.width(), image.height(), image.bits(), image.bytesPerLine());
     DecodeHints hints;
     auto convertFormats = [this]() { return zxingFormats(m_formats); };
     hints.setPossibleFormats(convertFormats());
     hints.setShouldTryHarder(m_tryHarder);
     hints.setShouldTryRotate(m_tryRotate);
     MultiFormatReader reader(hints);
-    auto result = reader.read(HybridBinarizer(generic));
+    auto result = reader.read(HybridBinarizer(luminanceSource));
     if (result.isValid()) {
         auto qzxingResult = toQZXingNuDecodeResult(result);
         emit queueDecodeResult(qzxingResult);
