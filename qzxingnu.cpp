@@ -1,7 +1,7 @@
 #include "qzxingnu.h"
+#include "qzxingnufilter.h"
 #include <QCoreApplication>
 #include <QtQml/QQmlEngine>
-#include "qzxingnufilter.h"
 #include <zxing-cpp/core/src/BarcodeFormat.h>
 #include <zxing-cpp/core/src/DecodeHints.h>
 #include <zxing-cpp/core/src/GenericLuminanceSource.h>
@@ -18,34 +18,34 @@ using ZXing::HybridBinarizer;
 using ZXing::MultiFormatReader;
 using ZXing::Result;
 
-static QVector<QPointF> toQVectorOfQPoints(const std::vector<ZXing::ResultPoint> &points)
+static QVector<QPointF> toQVectorOfQPoints(const std::vector<ZXing::ResultPoint>& points)
 {
     QVector<QPointF> result;
-    for (const auto &point : points) {
+    for (const auto& point : points) {
         result.append(QPointF(point.x(), point.y()));
     }
     return result;
 }
 
-static QZXingNuDecodeResult toQZXingNuDecodeResult(const ZXing::Result &result)
+static QZXingNuDecodeResult toQZXingNuDecodeResult(const ZXing::Result& result)
 {
     return { static_cast<DecodeStatus>(result.status()),
-             static_cast<BarcodeFormat>(result.format()),
-             QString::fromStdWString(result.text()),
-             QByteArray(result.rawBytes().charPtr(), result.rawBytes().length()),
-             toQVectorOfQPoints(result.resultPoints()),
-             result.isValid() };
+        static_cast<BarcodeFormat>(result.format()),
+        QString::fromStdWString(result.text()),
+        QByteArray(result.rawBytes().charPtr(), result.rawBytes().length()),
+        toQVectorOfQPoints(result.resultPoints()),
+        result.isValid() };
 }
-static ZXingFormats zxingFormats(const QVector<int> &from)
+static ZXingFormats zxingFormats(const QVector<int>& from)
 {
     ZXingFormats result;
     result.reserve(static_cast<ZXingFormats::size_type>(from.size()));
     std::transform(from.begin(), from.end(), std::back_inserter(result),
-                   [](int a) { return static_cast<ZXing::BarcodeFormat>(a); });
+        [](int a) { return static_cast<ZXing::BarcodeFormat>(a); });
     return result;
 }
 
-QZXingNu::QZXingNu(QObject *parent)
+QZXingNu::QZXingNu(QObject* parent)
     : QObject(parent)
 {
     connect(this, &QZXingNu::queueDecodeResult, this, &QZXingNu::setDecodeResult);
@@ -71,15 +71,15 @@ QZXingNuDecodeResult QZXingNu::decodeResult() const
     return m_decodeResult;
 }
 
-QZXingNuDecodeResult QZXingNu::decodeImage(const QImage &image)
+QZXingNuDecodeResult QZXingNu::decodeImage(const QImage& image)
 {
     // reentrant
     auto luminanceSource = std::make_shared<GenericLuminanceSource>(image.width(), image.height(), image.bits(), image.bytesPerLine());
     DecodeHints hints;
     auto convertFormats = [this]() { return zxingFormats(m_formats); };
     hints.setPossibleFormats(convertFormats());
-    hints.setShouldTryHarder(m_tryHarder);
-    hints.setShouldTryRotate(m_tryRotate);
+    hints.setTryHarder(m_tryHarder);
+    hints.setTryRotate(m_tryRotate);
     MultiFormatReader reader(hints);
     auto result = reader.read(HybridBinarizer(luminanceSource));
     if (result.isValid()) {
