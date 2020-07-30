@@ -21,7 +21,7 @@ add_library(${PROJECT_NAME}
     "QZXingNuFilter"
     )
 
-target_link_libraries(${PROJECT_NAME} Qt5::Core Qt5::Multimedia Qt5::Gui Qt5::Concurrent ZXingCore)
+target_link_libraries(${PROJECT_NAME} Qt5::Core Qt5::Multimedia Qt5::Gui Qt5::Concurrent ZXing)
 
 set(CMAKE_AUTORCC ON)
 find_package(Qt5Quick)
