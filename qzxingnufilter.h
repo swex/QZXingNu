@@ -1,29 +1,37 @@
 #ifndef QZXINGNUFILTER_H
 #define QZXINGNUFILTER_H
 
-#include <QAbstractVideoFilter>
-#include <QThreadPool>
 #include <qzxingnu.h>
+#include <QMediaCaptureSession>
+#include <QImageCapture>
+#include <QVideoSink>
+#include <QThreadPool>
+
 namespace QZXingNu {
 
-class QZXingNuFilter : public QAbstractVideoFilter {
+class QZXingNuFilter : public QObject
+{
     Q_OBJECT
     Q_PROPERTY(QZXingNu *qzxingNu READ qzxingNu WRITE setQzxingNu NOTIFY qzxingNuChanged)
     Q_PROPERTY(QZXingNuDecodeResult decodeResult READ decodeResult WRITE setDecodeResult NOTIFY decodeResultChanged)
-    QZXingNu* m_qzxingNu = nullptr;
-    QThreadPool* m_threadPool = nullptr;
+    Q_PROPERTY(QVideoSink *videoSink READ videoSink WRITE setVideoSink NOTIFY videoSinkChanged)
+    QThreadPool *m_threadPool;
+
+    QZXingNu *m_qzxingNu = nullptr;
     QZXingNuDecodeResult m_decodeResult;
+    QVideoSink *m_videoSink = nullptr;
+    QTimer *m_timer;
     int m_decodersRunning = 0;
-    friend class QZXingNuFilterRunnable;
 
 public:
     QZXingNuFilter(QObject *parent = nullptr);
 
-    // QAbstractVideoFilter interface
 public:
-    QVideoFilterRunnable *createFilterRunnable() override;
     QZXingNu *qzxingNu() const;
     QZXingNuDecodeResult decodeResult() const;
+
+    QVideoSink *videoSink() const;
+    void setVideoSink(QVideoSink *newVideoSink);
 
 signals:
     void tagFound(QString tag);
@@ -34,6 +42,7 @@ public slots:
 signals:
     void qzxingNuChanged(QZXingNu *qzxingNu);
     void decodeResultChanged(QZXingNuDecodeResult decodeResult);
+    void videoSinkChanged();
 };
 
 } // namespace QZXingNu

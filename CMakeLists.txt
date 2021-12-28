@@ -5,10 +5,10 @@ project(QZXingNu)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 
-find_package(Qt5Core)
-find_package(Qt5Gui)
-find_package(Qt5Multimedia)
-find_package(Qt5Concurrent)
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Gui Multimedia Concurrent)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Gui Multimedia Concurrent)
+
+
 
 add_subdirectory(zxing-cpp/core)
 
@@ -21,10 +21,14 @@ add_library(${PROJECT_NAME}
     "QZXingNuFilter"
     )
 
-target_link_libraries(${PROJECT_NAME} Qt5::Core Qt5::Multimedia Qt5::Gui Qt5::Concurrent ZXing)
+target_link_libraries(${PROJECT_NAME}
+    Qt${QT_VERSION_MAJOR}::Core
+    Qt${QT_VERSION_MAJOR}::Multimedia
+    Qt${QT_VERSION_MAJOR}::Gui
+    Qt${QT_VERSION_MAJOR}::Concurrent
+    ZXing)
 
 set(CMAKE_AUTORCC ON)
-find_package(Qt5Quick)
 
 add_executable(${PROJECT_NAME}_example "example/main.cpp" "example/qml.qrc")
-target_link_libraries(${PROJECT_NAME}_example Qt5::Core Qt5::Multimedia Qt5::Gui Qt5::Concurrent Qt5::Quick ${PROJECT_NAME})
+target_link_libraries(${PROJECT_NAME}_example ${PROJECT_NAME} Qt${QT_VERSION_MAJOR}::Quick)

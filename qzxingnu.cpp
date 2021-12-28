@@ -67,8 +67,15 @@ QZXingNuDecodeResult QZXingNu::decodeResult() const
     return m_decodeResult;
 }
 
-QZXingNuDecodeResult QZXingNu::decodeImage(const QImage &image)
+QZXingNuDecodeResult QZXingNu::decodeImage(QImage &&imagez)
 {
+    QImage image;
+    if (imagez.format() != QImage::Format_Grayscale8) {
+        image = imagez.convertToFormat(QImage::Format_Grayscale8);
+    } else {
+        image = imagez;
+    }
+
     // reentrant
     auto luminanceSource = std::make_shared<GenericLuminanceSource>(image.width(), image.height(), image.bits(), image.bytesPerLine());
     DecodeHints hints;
@@ -78,12 +85,21 @@ QZXingNuDecodeResult QZXingNu::decodeImage(const QImage &image)
     hints.setTryRotate(m_tryRotate);
     MultiFormatReader reader(hints);
     auto result = reader.read(HybridBinarizer(luminanceSource));
+    qDebug() << "result" << result.isValid();
     if (result.isValid()) {
         auto qzxingResult = toQZXingNuDecodeResult(result);
         emit queueDecodeResult(qzxingResult);
         return qzxingResult;
     }
     return {};
+}
+
+QZXingNuDecodeResult QZXingNu::decodeImage(const QVideoFrame &frame)
+{
+    if (!frame.isValid()) {
+        return {};
+    }
+    return decodeImage(frame.toImage());
 }
 
 void QZXingNu::setFormats(QVector<int> formats)

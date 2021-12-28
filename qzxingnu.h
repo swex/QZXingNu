@@ -4,6 +4,7 @@
 #include <QImage>
 #include <QObject>
 #include <memory>
+#include <QVideoFrame>
 
 namespace QZXingNu {
 
@@ -112,7 +113,8 @@ public:
     bool tryHarder() const;
     bool tryRotate() const;
     QZXingNuDecodeResult decodeResult() const;
-
+    QZXingNuDecodeResult decodeImage(QImage &&image);
+    QZXingNuDecodeResult decodeImage(const QVideoFrame &image);
 signals:
     void imageDecoded(QString data);
     void formatsChanged(QVector<int> formats);
@@ -121,7 +123,7 @@ signals:
     void decodeResultChanged(QZXingNuDecodeResult decodeResult);
     void queueDecodeResult(QZXingNuDecodeResult result);
 public slots:
-    QZXingNuDecodeResult decodeImage(const QImage &image);
+
     void setFormats(QVector<int> formats);
     void setTryHarder(bool tryHarder);
     void setTryRotate(bool tryRotate);
